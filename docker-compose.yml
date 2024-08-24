@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "18005:8081"
+    networks:
+      - webnet
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./jwtRS256.key:/app/jwtRS256.key
+      - ./jwtRS256.key.pub:/app/jwtRS256.key.pub
+    command: ["./main", "serve", "--config", "/app/config.yaml"]
+
+networks:
+  webnet:
