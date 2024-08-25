@@ -9,8 +9,8 @@ services:
       - webnet
     volumes:
       - ./config.yaml:/app/config.yaml
-      - ./jwtRS256.key:/app/jwtEd25519.key
-      - ./jwtRS256.key.pub:/app/jwtEd25519.key.pub
+      - ./jwtEd25519.key:/app/jwtEd25519.key
+      - ./jwtEd25519.key.pub:/app/jwtEd25519.key.pub
     command: ["./main", "serve", "--config", "/app/config.yaml"]
 
 networks:
