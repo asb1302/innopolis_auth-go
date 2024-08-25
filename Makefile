@@ -36,12 +36,7 @@ generate-keys:
 	openssl rsa -pubout -in jwtRS256.key -out jwtRS256.key.pub
 
 e2e-test:
-	# Запуск контейнеров
-	make docker-up
-	# Запуск e2e тестов
 	go test ./e2e_test -v
-	# Остановка контейнеров после тестов
-	make docker-down
 
 unit-test:
 	go test -v ./internal/pkg/jwt ./internal/auth/usecase

@@ -12,6 +12,8 @@ RUN go mod download
 
 COPY . .
 
+RUN go test ./...
+
 RUN go build -o main ./cmd
 
 # Начинаем новый этап с нуля (multi-stage build)
