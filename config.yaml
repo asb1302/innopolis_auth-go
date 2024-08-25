@@ -4,5 +4,5 @@ http_server:
 jwt:
   issuer: auth-service
   expires_in: 12h
-  public_key: /app/jwtRS256.key.pub   # Путь внутри контейнера
-  private_key: /app/jwtRS256.key      # Путь внутри контейнера
+  public_key: /app/jwtEd25519.key.pub   # Путь внутри контейнера
+  private_key: /app/jwtEd25519.key      # Путь внутри контейнера

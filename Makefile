@@ -32,8 +32,8 @@ clean:
 	docker-compose down --rmi all --volumes --remove-orphans && rm -rf ${BUILD_DIR}
 
 generate-keys:
-	openssl genpkey -algorithm RSA -out jwtRS256.key -pkeyopt rsa_keygen_bits:2048
-	openssl rsa -pubout -in jwtRS256.key -out jwtRS256.key.pub
+	openssl genpkey -algorithm ed25519 -out jwtEd25519.key
+	openssl pkey -in jwtEd25519.key -pubout -out jwtEd25519.key.pub
 
 e2e-test:
 	go test ./e2e_test -v

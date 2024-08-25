@@ -1,7 +1,9 @@
 package jwt
 
 import (
-	"crypto/rsa"
+	"crypto/ed25519"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"time"
 
@@ -20,41 +22,59 @@ var (
 type JWTManager struct {
 	issuer     string
 	expiresIn  time.Duration
-	publicKey  interface{}
-	privateKey interface{}
+	publicKey  ed25519.PublicKey
+	privateKey ed25519.PrivateKey
 }
 
-func NewJWTManager(issuer string, expiresIn time.Duration, publicKey, privateKey []byte) (*JWTManager, error) {
-	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(publicKey)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrKeyParsing, err)
+func NewJWTManager(issuer string, expiresIn time.Duration, publicKeyPEM, privateKeyPEM []byte) (*JWTManager, error) {
+	pubBlock, _ := pem.Decode(publicKeyPEM)
+	if pubBlock == nil || pubBlock.Type != "PUBLIC KEY" {
+		return nil, ErrKeyParsing
 	}
-	// TODO use Ed algs
 
-	privKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKey)
+	pubKey, err := x509.ParsePKIXPublicKey(pubBlock.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrKeyParsing, err)
+		return nil, ErrKeyParsing
+	}
+
+	edPubKey, ok := pubKey.(ed25519.PublicKey)
+	if !ok {
+		return nil, ErrKeyParsing
+	}
+
+	privBlock, _ := pem.Decode(privateKeyPEM)
+	if privBlock == nil || privBlock.Type != "PRIVATE KEY" {
+		return nil, ErrKeyParsing
+	}
+	privKey, err := x509.ParsePKCS8PrivateKey(privBlock.Bytes)
+	if err != nil {
+		return nil, ErrKeyParsing
+	}
+
+	edPrivKey, ok := privKey.(ed25519.PrivateKey)
+	if !ok {
+		return nil, ErrKeyParsing
 	}
 
 	return &JWTManager{
 		issuer:     issuer,
 		expiresIn:  expiresIn,
-		publicKey:  pubKey,
-		privateKey: privKey,
+		publicKey:  edPubKey,
+		privateKey: edPrivKey,
 	}, nil
 }
 
 func (j *JWTManager) IssueToken(userID string) (string, error) {
-	claims := jwt.MapClaims{
-		"iss": j.issuer,
-		"sub": userID,
-		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(j.expiresIn).Unix(),
+	claims := jwt.RegisteredClaims{
+		Issuer:    j.issuer,
+		Subject:   userID,
+		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(j.expiresIn)),
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodEdDSA, claims)
 
-	signed, err := token.SignedString(j.privateKey.(*rsa.PrivateKey))
+	signed, err := token.SignedString(j.privateKey)
 	if err != nil {
 		return "", fmt.Errorf("%w: %s", ErrSigning, err)
 	}
@@ -63,14 +83,11 @@ func (j *JWTManager) IssueToken(userID string) (string, error) {
 
 func (j *JWTManager) VerifyToken(tokenString string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodEd25519); !ok {
 			return nil, ErrValidation
 		}
 		return j.publicKey, nil
-	},
-		jwt.WithIssuer(j.issuer),
-		jwt.WithExpirationRequired(),
-	)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %s", ErrValidation, err)
 	}

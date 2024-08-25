@@ -1,3 +1,5 @@
 jwtRS256.key
 jwtRS256.key.pub
 test_db.sql
+jwtEd25519.key
+jwtEd25519.key.pub
