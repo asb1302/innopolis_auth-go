@@ -4,7 +4,5 @@ http_server:
 jwt:
   issuer: auth-service
   expires_in: 12h
-  public_key: /Users/lab/Documents/go_projects/innopolis_go_course/innopolis_auth-go/jwtEd25519.pem.pub
-  private_key: /Users/lab/Documents/go_projects/innopolis_go_course/innopolis_auth-go/jwtEd25519.pem
-#  public_key: /Users/bogatyr/work/go/src/github.com/bogatyr285/auth-go/jwtRS256.key.pub
-#  private_key: /Users/bogatyr/work/go/src/github.com/bogatyr285/auth-go/jwtRS256.key
+  public_key: /app/jwtEd25519.key.pub   # Путь внутри контейнера
+  private_key: /app/jwtEd25519.key      # Путь внутри контейнера
